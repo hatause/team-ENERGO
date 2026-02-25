@@ -1,0 +1,28 @@
+# Private backups and local secrets
+private_backups/
+.env
+.env.*
+*.local
+*.secret
+
+# Node
+node_modules/
+dist/
+build/
+
+# Java
+target/
+*.class
+*.jar
+
+# Python
+__pycache__/
+*.pyc
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
