@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+HEAD
 # Compiled class file
 *.class
 
@@ -34,4 +34,4 @@ backend/prisma/dev.db
 backend/prisma/dev.db-journal
 frontend/.vite/
 *.log
->>>>>>> abdf17aaeca4108bb0f6f777ce7ac8cfcfb49bac
+abdf17aaeca4108bb0f6f777ce7ac8cfcfb49bac
