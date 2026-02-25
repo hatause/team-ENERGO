@@ -1,0 +1,352 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum TestStatus {
+  GENERATING
+  READY
+  FAILED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  CHECKING
+  COMPLETED
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTI_CHOICE
+  OPEN_SHORT
+}
+
+enum RecommendationType {
+  REVIEW
+  PRACTICE
+  THEORY
+}
+
+enum ActivityType {
+  FEYNMAN
+  DEBATE
+}
+
+enum ActivityReviewStatus {
+  PENDING_REVIEW
+  REVIEWED
+}
+
+model User {
+  id             String           @id @default(cuid())
+  email          String           @unique
+  passwordHash   String
+  role           Role
+  status         UserStatus       @default(ACTIVE)
+  locale         String           @default("ru")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+  refreshTokens  RefreshToken[]
+  tests          Test[]           @relation("StudentTests")
+  testAttempts   TestAttempt[]    @relation("StudentAttempts")
+  recommendations Recommendation[]
+  weakTopics     WeakTopic[]
+  practiceTasks  PracticeTask[]
+  progress       ProgressSnapshot[]
+  activities     ActivitySession[]
+  auditLogs      AuditLog[]       @relation("ActorAuditLogs")
+}
+
+model RefreshToken {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  revokedAt  DateTime?
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Group {
+  id                String           @id @default(cuid())
+  code              String           @unique
+  name              String
+  semester          String
+  externalGroupCode String?
+  createdAt         DateTime         @default(now())
+  students          StudentProfile[]
+  scheduleItems     ScheduleItem[]
+
+  @@index([semester])
+}
+
+model StudentProfile {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  fullName   String
+  studentNo  String   @unique
+  groupId    String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group      Group    @relation(fields: [groupId], references: [id])
+}
+
+model TeacherProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  fullName          String
+  department        String?
+  externalTeacherId String?
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([externalTeacherId])
+}
+
+model Subject {
+  id                  String            @id @default(cuid())
+  externalSubjectCode String?           @unique
+  name                String
+  description         String?
+  syllabusJson        Json?
+  createdAt           DateTime          @default(now())
+  tests               Test[]
+  scheduleItems       ScheduleItem[]
+  weakTopics          WeakTopic[]
+  practiceTasks       PracticeTask[]
+  progressSnapshots   ProgressSnapshot[]
+  activities          ActivitySession[]
+}
+
+model ScheduleItem {
+  id               String   @id @default(cuid())
+  externalScheduleId String  @unique
+  subjectId        String
+  groupId          String
+  teacherExternalId String?
+  startsAt         DateTime
+  endsAt           DateTime
+  room             String?
+  syncedAt         DateTime @default(now())
+  subject          Subject  @relation(fields: [subjectId], references: [id])
+  group            Group    @relation(fields: [groupId], references: [id])
+  tests            Test[]
+
+  @@index([groupId, startsAt])
+  @@index([subjectId])
+}
+
+model Test {
+  id             String      @id @default(cuid())
+  studentId      String
+  subjectId      String
+  scheduleItemId String?
+  difficulty     Difficulty
+  status         TestStatus  @default(GENERATING)
+  questionCount  Int
+  promptVersion  String      @default("v1")
+  language       String      @default("ru")
+  createdAt      DateTime    @default(now())
+  student        User        @relation("StudentTests", fields: [studentId], references: [id])
+  subject        Subject     @relation(fields: [subjectId], references: [id])
+  scheduleItem   ScheduleItem? @relation(fields: [scheduleItemId], references: [id])
+  questions      Question[]
+  attempts       TestAttempt[]
+
+  @@index([studentId, createdAt])
+  @@index([subjectId])
+}
+
+model Question {
+  id               String       @id @default(cuid())
+  testId           String
+  type             QuestionType
+  stem             String
+  topicCode        String
+  difficulty       Difficulty
+  rubricJson       Json?
+  correctAnswerJson Json?
+  fingerprint      String
+  createdAt        DateTime     @default(now())
+  test             Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  options          AnswerOption[]
+  studentAnswers   StudentAnswer[]
+
+  @@index([testId])
+  @@index([fingerprint])
+}
+
+model AnswerOption {
+  id         String   @id @default(cuid())
+  questionId String
+  code       String
+  text       String
+  isCorrect  Boolean  @default(false)
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+model TestAttempt {
+  id             String        @id @default(cuid())
+  testId          String
+  studentId       String
+  status          AttemptStatus @default(IN_PROGRESS)
+  startedAt       DateTime      @default(now())
+  submittedAt     DateTime?
+  checkedAt       DateTime?
+  scorePoints     Float?
+  scorePercent    Float?
+  passed          Boolean?
+  clientDurationSec Int?
+  test            Test          @relation(fields: [testId], references: [id])
+  student         User          @relation("StudentAttempts", fields: [studentId], references: [id])
+  answers         StudentAnswer[]
+  feedback        Feedback?
+  recommendations Recommendation[]
+
+  @@index([studentId, submittedAt])
+  @@index([testId])
+}
+
+model StudentAnswer {
+  id               String      @id @default(cuid())
+  attemptId         String
+  questionId        String
+  selectedOptionIds Json?
+  answerText        String?
+  scorePoints       Float?
+  isCorrect         Boolean?
+  rationale         String?
+  attempt           TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question          Question    @relation(fields: [questionId], references: [id])
+
+  @@unique([attemptId, questionId])
+  @@index([questionId])
+}
+
+model Feedback {
+  id          String      @id @default(cuid())
+  attemptId    String      @unique
+  summary      String
+  mistakesJson Json?
+  strengthsJson Json?
+  attempt      TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+}
+
+model Recommendation {
+  id          String             @id @default(cuid())
+  attemptId    String
+  studentId    String
+  type        RecommendationType
+  contentJson Json
+  priority    Int                @default(1)
+  createdAt   DateTime           @default(now())
+  student     User               @relation(fields: [studentId], references: [id])
+  attempt     TestAttempt        @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
+}
+
+model WeakTopic {
+  id           String   @id @default(cuid())
+  studentId     String
+  subjectId     String
+  topicCode     String
+  weaknessScore Float
+  lastSeenAt    DateTime @default(now())
+  student       User     @relation(fields: [studentId], references: [id])
+  subject       Subject  @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, subjectId, topicCode])
+  @@index([subjectId, weaknessScore])
+}
+
+model PracticeTask {
+  id             String    @id @default(cuid())
+  studentId       String
+  subjectId       String
+  topicCode       String
+  prompt          String
+  expectedFormat  String
+  status          String    @default("NEW")
+  createdAt       DateTime  @default(now())
+  student         User      @relation(fields: [studentId], references: [id])
+  subject         Subject   @relation(fields: [subjectId], references: [id])
+
+  @@index([studentId, createdAt])
+}
+
+model ProgressSnapshot {
+  id          String   @id @default(cuid())
+  studentId    String
+  subjectId    String
+  weekStart    DateTime
+  avgScore     Float
+  masteryJson  Json
+  trend        String?
+  createdAt    DateTime @default(now())
+  student      User     @relation(fields: [studentId], references: [id])
+  subject      Subject  @relation(fields: [subjectId], references: [id])
+
+  @@unique([studentId, subjectId, weekStart])
+  @@index([subjectId, weekStart])
+}
+
+model ActivitySession {
+  id                  String               @id @default(cuid())
+  studentId            String
+  subjectId            String
+  type                ActivityType
+  transcriptJson      Json
+  scoreJson           Json
+  reviewStatus        ActivityReviewStatus @default(PENDING_REVIEW)
+  teacherComment      String?
+  createdAt           DateTime             @default(now())
+  student             User                 @relation(fields: [studentId], references: [id])
+  subject             Subject              @relation(fields: [subjectId], references: [id])
+
+  @@index([subjectId, createdAt])
+  @@index([reviewStatus])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorUserId String?
+  action     String
+  entityType String
+  entityId   String
+  payloadJson Json?
+  traceId    String
+  createdAt  DateTime @default(now())
+  actor      User?    @relation("ActorAuditLogs", fields: [actorUserId], references: [id])
+
+  @@index([action, createdAt])
+  @@index([traceId])
+}
