@@ -1,0 +1,125 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+
+    <Properties>
+        <Property name="LOG_DIR">logs</Property>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+        </Console>
+
+        <RollingFile name="TcpCppFile"
+                     fileName="${LOG_DIR}/tcpC++/tcp-cpp.log"
+                     filePattern="${LOG_DIR}/tcpC++/tcp-cpp-%d{yyyy-MM-dd}-%i.log.gz"
+                     createOnDemand="true">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+                <SizeBasedTriggeringPolicy size="20MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="14" />
+        </RollingFile>
+
+        <RollingFile name="TcpWebFile"
+                     fileName="${LOG_DIR}/tcpWeb/tcp-web.log"
+                     filePattern="${LOG_DIR}/tcpWeb/tcp-web-%d{yyyy-MM-dd}-%i.log.gz"
+                     createOnDemand="true">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+                <SizeBasedTriggeringPolicy size="20MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="14" />
+        </RollingFile>
+
+        <RollingFile name="TgBotFile"
+                     fileName="${LOG_DIR}/tgBot/tg-bot.log"
+                     filePattern="${LOG_DIR}/tgBot/tg-bot-%d{yyyy-MM-dd}-%i.log.gz"
+                     createOnDemand="true">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+                <SizeBasedTriggeringPolicy size="20MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="14" />
+        </RollingFile>
+
+        <RollingFile name="AdminPanelFile"
+                     fileName="${LOG_DIR}/AdminPanel/admin-panel.log"
+                     filePattern="${LOG_DIR}/AdminPanel/admin-panel-%d{yyyy-MM-dd}-%i.log.gz"
+                     createOnDemand="true">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+                <SizeBasedTriggeringPolicy size="30MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="30" />
+        </RollingFile>
+
+        <RollingFile name="ErrorFile"
+                     fileName="${LOG_DIR}/error/error.log"
+                     filePattern="${LOG_DIR}/error/error-%d{yyyy-MM-dd}-%i.log.gz"
+                     createOnDemand="true">
+            <PatternLayout pattern="${LOG_PATTERN}" />
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY" />
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true" />
+                <SizeBasedTriggeringPolicy size="20MB" />
+            </Policies>
+            <DefaultRolloverStrategy max="30" />
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="com.schedule.server.tcp" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="TcpCppFile" />
+            <AppenderRef ref="ErrorFile" />
+        </Logger>
+
+        <Logger name="com.schedule.server.config.RequestLoggingFilter" level="INFO" additivity="false">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="TcpWebFile" />
+            <AppenderRef ref="ErrorFile" />
+        </Logger>
+
+        <Logger name="com.schedule.server.controller.BotBridgeController" level="INFO" additivity="false">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="TgBotFile" />
+            <AppenderRef ref="ErrorFile" />
+        </Logger>
+
+        <Logger name="com.schedule.server.service.BotBridgeService" level="INFO" additivity="false">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="TgBotFile" />
+            <AppenderRef ref="ErrorFile" />
+        </Logger>
+
+        <Logger name="com.schedule.server" level="INFO" additivity="false">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="AdminPanelFile" />
+            <AppenderRef ref="ErrorFile" />
+        </Logger>
+
+        <Logger name="kvt" level="INFO" additivity="false">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="AdminPanelFile" />
+            <AppenderRef ref="ErrorFile" />
+        </Logger>
+
+        <Logger name="org.springframework" level="INFO" additivity="false">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="AdminPanelFile" />
+        </Logger>
+
+        <Root level="INFO">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="AdminPanelFile" />
+            <AppenderRef ref="ErrorFile" />
+        </Root>
+    </Loggers>
+
+</Configuration>

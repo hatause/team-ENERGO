@@ -1,0 +1,14 @@
+{
+  // Example tsconfig for frontend
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": "./src",
+    "types": ["vite/client"]
+  },
+  "include": ["src"]
+}

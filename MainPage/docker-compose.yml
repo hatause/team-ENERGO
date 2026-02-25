@@ -1,0 +1,17 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:16
+    container_name: visualsite-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: visualsite
+      POSTGRES_USER: example_user
+      POSTGRES_PASSWORD: example_password
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
